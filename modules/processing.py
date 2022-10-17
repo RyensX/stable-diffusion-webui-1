@@ -316,6 +316,11 @@ def create_infotext(p, all_prompts, all_seeds, all_subseeds, comments, iteration
 
     return f"{all_prompts[index]}{negative_prompt_text}\n{generation_params_text}".strip()
 
+import time
+import string
+from modules.google_trans_new import google_translator  
+
+translator = google_translator()
 
 def process_images(p: StableDiffusionProcessing) -> Processed:
     """this is the main loop that both txt2img and img2img use; it calls func_init once inside all the scopes and func_sample once per batch"""
@@ -324,6 +329,14 @@ def process_images(p: StableDiffusionProcessing) -> Processed:
         assert(len(p.prompt) > 0)
     else:
         assert p.prompt is not None
+
+    batchTime=time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(time.time()))
+    print(f"开始处理prompt({batchTime}):",p.prompt)
+    pPrompt=str(p.prompt)
+    if pPrompt.startswith("#"):
+        pPrompt=str(translator.translate(pPrompt[1:].strip(),lang_tgt='en')).lower()
+        print(f"收到转换请求，开始处理：原始:[{p.prompt}] 处理后:[{pPrompt}]")
+        p.prompt=pPrompt
 
     with open(os.path.join(shared.script_path, "params.txt"), "w", encoding="utf8") as file:
         processed = Processed(p, [], p.seed, "")
